@@ -11,9 +11,9 @@ function App() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingSurname, setIsEditingSurname] = useState(false);
 
-  // 1. Завантаження даних із бази при старті додатка
+  // Завантаження даних при старті
   useEffect(() => {
-    fetch('http://localhost:3000/get-profile')
+    fetch('http://localhost:3000/api/get-profile')
       .then((res) => res.json())
       .then((data) => {
         if (data.name) setName(data.name);
@@ -22,10 +22,10 @@ function App() {
       .catch((err) => console.error('Помилка завантаження:', err));
   }, []);
 
-  // 2. Функція для збереження даних у базу
+  // Збереження даних
   const handleSubmit = async () => {
     try {
-      const response = await fetch('http://localhost:3000/update-profile', {
+      const response = await fetch('http://localhost:3000/api/update-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ function App() {
       });
 
       const result = await response.json();
-      alert(result.message); // Виведе "Profile updated successfully!"
+      alert(result.message);
     } catch (error) {
       console.error('Помилка збереження:', error);
       alert('Не вдалося зберегти дані');
@@ -91,7 +91,6 @@ function App() {
         </div>
 
         <div className="buttons">
-          {/* Додано обробник кліку для збереження */}
           <button type="button" onClick={handleSubmit}>
             Submit
           </button>
