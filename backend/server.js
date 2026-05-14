@@ -4,12 +4,60 @@ import { MongoClient } from 'mongodb';
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
+import prometheus from 'prom-client';
 
 const app = express();
 const port = 3000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// ====================== PROMETHEUS ======================
+const register = new prometheus.Registry();
+
+prometheus.collectDefaultMetrics({ register });
+
+const httpRequestTotal = new prometheus.Counter({
+  name: 'http_request_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status'],
+  registers: [register]
+});
+
+const httpRequestDuration = new prometheus.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route'],
+  registers: [register],
+})
+
+
+
+//Middleware 
+
+app.use((req, res, next) => {
+  const end = httpRequestDuration.startTimer();
+  res.on('finish', () => {
+    httpRequestTotal.inc({
+      method: req.method,
+      route: req.route?.path || req.path,
+      status: res.statusCode
+    })
+    end({ method: req.method, route: req.route?.path || req.path });
+  })
+  next();
+})
+
+
+
+app.get('/metrics', async (req,res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics())
+  } catch (err) {
+    res.status(500).end(err.message);
+  }
+})
 
 app.use(cors({
   origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
