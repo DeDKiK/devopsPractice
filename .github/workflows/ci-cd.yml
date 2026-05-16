@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write        
+      packages: write
 
     steps:
       - name: Checkout code
@@ -25,18 +25,21 @@ jobs:
           cache: 'npm'
 
       # ==================== FRONTEND ====================
-      - name: Install Frontend deps
+      - name: Install Frontend dependencies
         run: npm ci
 
       - name: Build Frontend
         run: npm run build
 
       # ==================== BACKEND ====================
-      - name: Install Backend deps
+      - name: Install Backend dependencies
         run: npm ci
         working-directory: backend
 
       # ==================== DOCKER ====================
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -44,7 +47,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
+      - name: Extract metadata (tags & labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -53,12 +56,13 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Docker images
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=inline   
