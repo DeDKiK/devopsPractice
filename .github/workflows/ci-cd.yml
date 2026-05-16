@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,44 +7,58 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build-and-test:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write        
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # ==================== NODE.JS SETUP ====================
-      - name: Setup Node.js 22
+      # ==================== NODE.JS ====================
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
 
       # ==================== FRONTEND ====================
-      - name: Install Frontend dependencies
+      - name: Install Frontend deps
         run: npm ci
 
       - name: Build Frontend
         run: npm run build
 
       # ==================== BACKEND ====================
-      - name: Install Backend dependencies
+      - name: Install Backend deps
         run: npm ci
         working-directory: backend
 
-      - name: Build Backend
-        run: npm run build
-        working-directory: backend
-        continue-on-error: true
-
       # ==================== DOCKER ====================
-      - name: Build Docker images
-        run: docker compose build --no-cache
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Show Docker services status
-        run: docker compose ps
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: CI Pipeline Summary
-        if: always()
-        run: echo "🎉 CI Pipeline finished!"
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
