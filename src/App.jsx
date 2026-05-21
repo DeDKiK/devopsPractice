@@ -13,7 +13,7 @@ function App() {
 
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/get-profile')
+    fetch('/api/get-profile')
       .then((res) => res.json())
       .then((data) => {
         if (data.name) setName(data.name);
@@ -25,7 +25,7 @@ function App() {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/update-profile', {
+      const response = await fetch('/api/update-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
