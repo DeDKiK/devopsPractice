@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ==================== NODE.JS ====================
+      # ==================== NODE.JS SETUP ====================
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -25,18 +25,17 @@ jobs:
           cache: 'npm'
 
       # ==================== FRONTEND ====================
-      - name: Install Frontend dependencies
-        run: npm ci
-
-      - name: Build Frontend
-        run: npm run build
+      - name: Install & Build Frontend
+        run: |
+          npm ci
+          npm run build
 
       # ==================== BACKEND ====================
       - name: Install Backend dependencies
         run: npm ci
-        working-directory: backend
+        working-directory: ./backend
 
-      # ==================== DOCKER ====================
+      # ==================== DOCKER SETUP ====================
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -47,7 +46,8 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags & labels)
+      # ==================== METADATA ====================
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -56,13 +56,30 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Docker image
+      # ==================== BUILD & PUSH FRONTEND ====================
+      - name: Build and push Frontend
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ghcr.io/${{ github.repository }}-frontend:${{ steps.meta.outputs.version }}
+            ghcr.io/${{ github.repository }}-frontend:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=inline   
+          cache-to: type=inline
+
+      # ==================== BUILD & PUSH BACKEND ====================
+      - name: Build and push Backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+          tags: |
+            ghcr.io/${{ github.repository }}-backend:${{ steps.meta.outputs.version }}
+            ghcr.io/${{ github.repository }}-backend:latest
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=inline
