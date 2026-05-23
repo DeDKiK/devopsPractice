@@ -112,6 +112,15 @@ app.post('/api/update-profile', async (req, res) => {
   }
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    mongo: 'connected',
+    uptime: process.uptime()
+  });
+});
+
 app.listen(port, '0.0.0.0', () => {
   console.log(`✅ Backend running at http://0.0.0.0:${port}`);
 });
