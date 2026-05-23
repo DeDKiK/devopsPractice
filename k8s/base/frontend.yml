@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ghcr.io/dedkik/devopsPractice-frontend:latest
+        image: ghcr.io/dedkik/devopspractice-frontend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
