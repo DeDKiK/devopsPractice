@@ -38,11 +38,29 @@ spec:
 
         resources:
           requests:
-            cpu: "100m"
-            memory: "200Mi"
+            cpu: "150m"
+            memory: "256Mi"
           limits:
-            cpu: "300m"
-            memory: "400Mi"
+            cpu: "500m"
+            memory: "600Mi"
+            # === Probes ===
+        readinessProbe:
+          httpGet:
+            path: /health     
+            port: 3000
+          initialDelaySeconds: 12
+          periodSeconds: 6
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 4
 
 ---
 apiVersion: v1
