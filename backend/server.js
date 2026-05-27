@@ -60,55 +60,84 @@ app.get('/metrics', async (req,res) => {
 })
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost'],
-  credentials: true
+  origin: '*',
+  credentials: false
 }));
 
 app.use(bodyParser.json());
 
 
-const url = process.env.MONGO_URL || 'mongodb://mongo:27017/test';
+const url = process.env.MONGO_URL || 'mongodb://mongo.devops-practice.svc.cluster.local:27017/test';
 const client = new MongoClient(url);
+
+let dbConnected = false;
 
 async function connectDB() {
   try {
     await client.connect();
+    dbConnected = true;
     console.log('✅ Connected successfully to MongoDB');
     console.log(`📊 Using connection: ${url}`);
   } catch (e) {
+    dbConnected = false;
     console.error('❌ MongoDB Connection error:', e);
+    process.exit(1);
   }
 }
 
-connectDB();
+// Start server only after DB connection
+connectDB().then(() => {
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`✅ Backend running at http://0.0.0.0:${port}`);
+  });
+}).catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
 
 // API Routes
 app.get('/api/get-profile', async (req, res) => {
   try {
+    if (!dbConnected) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
     const db = client.db('test');           
     const collection = db.collection('users');
     const user = await collection.findOne({ id: 1 });
     res.json(user || {});
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('❌ Error getting profile:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
 app.post('/api/update-profile', async (req, res) => {
   try {
+    if (!dbConnected) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
     const userObj = req.body;
+    
+    // ВИДАЛЯЄМО _id перед оновленням, щоб MongoDB не сварилася
+    if (userObj._id) {
+      delete userObj._id;
+    }
+
+    console.log('📝 Updating profile with:', userObj);
     const db = client.db('test');           
     const collection = db.collection('users');
 
-    await collection.updateOne(
+    const result = await collection.updateOne(
       { id: 1 },
       { $set: userObj },
       { upsert: true }
     );
 
+    console.log('✅ Update result:', result);
     res.json({ message: "Profile updated successfully!" });
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('❌ Error updating profile:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
@@ -119,8 +148,4 @@ app.get('/health', (req, res) => {
     mongo: 'connected',
     uptime: process.uptime()
   });
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`✅ Backend running at http://0.0.0.0:${port}`);
 });

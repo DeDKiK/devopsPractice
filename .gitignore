@@ -31,3 +31,13 @@ dist-ssr
 
 prometheus-data/
 grafana-data/
+
+.terraform/
+terraform.tfstate
+*.backup
+*.tfstate.backup
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+*.tfstate
+*.tfstate.*
