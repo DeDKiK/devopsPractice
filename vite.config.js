@@ -16,6 +16,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       }
-    }
+    },
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    exclude: ['backend/**', 'node_modules/**']
   }
 })
