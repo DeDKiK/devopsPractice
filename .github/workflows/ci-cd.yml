@@ -28,11 +28,22 @@ jobs:
       - name: Install & Build Frontend
         run: |
           npm ci
-          npm run build
-
+          
+      - name: Run Frontend Lint & Tests ✅
+        run: |
+          npm test --if-present
+          
+      - name: Build Frontend
+        run: npm run build
+        
       # ==================== BACKEND ====================
       - name: Install Backend dependencies
         run: npm ci
+        working-directory: ./backend
+
+      - name: Run Backend Lint & Tests 🧪
+        run: |
+          npm test --if-present
         working-directory: ./backend
 
       # ==================== DOCKER SETUP ====================
