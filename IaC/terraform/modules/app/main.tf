@@ -67,7 +67,7 @@ resource "kubernetes_deployment" "backend" {
 
           env {
             name  = "MONGO_URL"
-            value = "mongodb://mongo:27017/test"   # коротке ім'я в тому ж namespace
+            value = "mongodb://mongo:27017/test"  
           }
 
           env {

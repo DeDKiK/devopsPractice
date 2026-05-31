@@ -41,3 +41,8 @@ terraform.tfstate
 *.tfvars.json
 *.tfstate
 *.tfstate.*
+
+# Helm generated files
+rendered.yaml
+**/rendered.yaml
+.helmignore
