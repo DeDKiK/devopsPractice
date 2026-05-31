@@ -1,0 +1,51 @@
+{{- if .Values.mongoExpress.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: mongo-express
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+      containers:
+      - name: mongo-express
+        image: "{{ .Values.mongoExpress.image.repository }}:{{ .Values.mongoExpress.image.tag }}"
+        imagePullPolicy: {{ .Values.mongoExpress.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.mongoExpress.service.port }}
+        resources:
+          {{- toYaml .Values.mongoExpress.resources | nindent 10 }}
+        env:
+        - name: ME_CONFIG_MONGODB_SERVER
+          value: mongo
+        - name: ME_CONFIG_MONGODB_PORT
+          value: "27017"
+        - name: ME_CONFIG_BASICAUTH_USERNAME
+          value: admin
+        - name: ME_CONFIG_BASICAUTH_PASSWORD
+          value: password123   # Зміни на проді!
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express
+  namespace: {{ .Values.namespace }}
+spec:
+  type: {{ .Values.mongoExpress.service.type }}
+  ports:
+  - port: {{ .Values.mongoExpress.service.port }}
+    targetPort: {{ .Values.mongoExpress.service.port }}
+  selector:
+    app: mongo-express
+{{- end }}

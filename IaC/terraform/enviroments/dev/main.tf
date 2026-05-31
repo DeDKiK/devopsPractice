@@ -5,7 +5,7 @@ resource "minikube_cluster" "devopspractice" {
   memory        = "8192mb"
   disk_size     = "30g"
   
-  # Використовуємо саме apiserver_ips для локального обходу бага certSANs
+
   apiserver_ips = ["127.0.0.1"]
 
   addons = [

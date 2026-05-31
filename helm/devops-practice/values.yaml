@@ -1,0 +1,97 @@
+namespace: devops-practice
+
+replicaCount: 1
+
+# Frontend (Next.js)
+frontend:
+  image:
+    repository: devopspractice-frontend
+    tag: "latest"
+    pullPolicy: Never
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  service:
+    port: 3000
+
+# Backend (Node.js)
+backend:
+  image:
+    repository: devopspractice-backend
+    tag: "latest"
+    pullPolicy: Never
+  resources:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: 750m
+      memory: 768Mi
+  env:
+    NODE_ENV: production
+    PORT: 5000
+  service:
+    port: 5000
+
+# MongoDB
+mongo:
+  enabled: true
+  image:
+    repository: mongo
+    tag: 7.0
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 300m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
+  storage:
+    size: 2Gi
+    storageClass: "standard"
+  service:
+    port: 27017
+
+ingress:
+  enabled: true
+  className: nginx
+  host: devops-practice.local   
+  tls:
+    enabled: false
+
+
+# Horizontal Pod Autoscaler
+hpa:
+  frontend:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  backend:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# Mongo Express (UI for MongoDB)
+mongoExpress:
+  enabled: true
+  image:
+    repository: mongo-express
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  service:
+    type: ClusterIP
+    port: 8081
