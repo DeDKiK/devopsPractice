@@ -10,23 +10,23 @@ describe('basic math test', () => {
 // simple logic test
 describe('Server configuration test', () => {
   it('default port should be defined', () => {
-    const port = process.env.PORT || 3000;
-    expect(port).toBe(3000);
+    const port = process.env.PORT || 5000;
+    expect(port).toBe(5000);
   });
 });
 
-// 1. Мокаємо модуль 'mongodb' за допомогою ES6 класу, щоб оператор `new` працював без помилок
+// 1. mock the ‘mongodb’ module in an ES6 class so that the `new` operator works without errors
 vi.mock('mongodb', () => {
   return {
     MongoClient: class {
       constructor(url) {
         this.url = url;
       }
-      // Імітуємо успішне підключення до бази даних
+      // Simulate a successful connection to the database
       connect() {
         return Promise.resolve();
       }
-      // Імітуємо повернення бази даних та потрібної колекції з фейковими даними
+      // Simulate a database query and return the desired collection with sample data
       db() {
         return {
           collection: () => ({
@@ -39,26 +39,26 @@ vi.mock('mongodb', () => {
   };
 });
 
-// 2. Імпортуємо сам сервер (тепер він успішно ініціалізує наш фейковий MongoClient)
+// 2. Import the server itself (it will now successfully initialize our mock MongoClient)
 import './server.js';
 
 describe('Бекенд API Тести (Express + Prometheus)', () => {
   
-  it('GET /health має повертати статус успіху або готовності', async () => {
-    const res = await request('http://localhost:3000').get('/health');
-    // Ендпоінт може повернути 200 (якщо база підключилась) або 503 (якщо ще в процесі)
-    // Обидва варіанти означають, що сам Express-маршрут працює коректно
+  it('GET /health must return a success or ready status', async () => {
+    const res = await request('http://localhost:5000').get('/health');
+      // Endpoint may return 200 (if database is connected) or 503 (if still in process)
+      // Both variants mean that the Express route is working correctly
     expect([200, 503]).toContain(res.status);
   });
 
-  it('GET /metrics має віддавати метрики для Prometheus', async () => {
-    const res = await request('http://localhost:3000').get('/metrics');
+  it('GET /metrics must return metrics for Prometheus', async () => {
+    const res = await request('http://localhost:5000').get('/metrics');
     expect(res.status).toBe(200);
     expect(res.text).toContain('http_request_total');
   });
 
-  it('GET /api/get-profile повертає формат JSON', async () => {
-    const res = await request('http://localhost:3000').get('/api/get-profile');
+  it('GET /api/get-profile must return JSON format', async () => {
+    const res = await request('http://localhost:5000').get('/api/get-profile');
     expect([200, 503]).toContain(res.status);
     expect(res.headers['content-type']).toContain('application/json');
   });
